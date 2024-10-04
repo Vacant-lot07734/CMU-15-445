@@ -20,7 +20,7 @@ auto TrieStore::Get(std::string_view key) -> std::optional<ValueGuard<T>> {
   //(2)
   auto value_ptr = new_root.Get<T>(key);
   //(3)
-  if(value_ptr){
+  if (value_ptr) {
     return ValueGuard<T>(new_root, *value_ptr);
   }
   return std::nullopt;
@@ -33,7 +33,7 @@ void TrieStore::Put(std::string_view key, T value) {
   // throw NotImplementedException("TrieStore::Put is not implemented.");
 
   this->write_lock_.lock();
-  auto new_root =this->root_.Put(key, std::move(value));
+  auto new_root = this->root_.Put(key, std::move(value));
 
   this->root_lock_.lock();
   this->root_ = new_root;

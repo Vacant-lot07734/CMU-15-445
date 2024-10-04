@@ -41,12 +41,12 @@ auto Planner::GetFuncCallFromFactory(const std::string &func_name, std::vector<A
   // 3. return a `StringExpression` std::shared_ptr.
   // throw Exception(fmt::format("func call {} not supported in planner yet", func_name));
   //(1)
-  if(func_name != "lower" && func_name != "upper"){
+  if (func_name != "lower" && func_name != "upper") {
     throw Exception("Unknown func");
   }
   StringExpressionType expr_type = (func_name == "lower") ? StringExpressionType::Lower : StringExpressionType::Upper;
   //(2)
-  if(args.size() != 1){
+  if (args.size() != 1) {
     throw Exception("the number of args (should be 1)");
   }
   //(3)

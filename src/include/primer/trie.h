@@ -44,7 +44,7 @@ class MoveBlocked {
 class TrieNode {
  public:
   // Create a TrieNode with no children.
-  TrieNode() = default;//生成默认构造函数
+  TrieNode() = default;  //生成默认构造函数
 
   // Create a TrieNode with some children.
   explicit TrieNode(std::map<char, std::shared_ptr<const TrieNode>> children) : children_(std::move(children)) {}
@@ -111,7 +111,7 @@ class Trie {
 
  public:
   // Create an empty trie.
-  Trie() = default;//生成一个默认构造函数
+  Trie() = default;  //生成一个默认构造函数
 
   // Get the value associated with the given key.
   // 1. If the key is not in the trie, return nullptr.

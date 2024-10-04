@@ -18,24 +18,23 @@ auto Trie::Get(std::string_view key) const -> const T * {
 
   //返回的是value的指针！！！
   auto node = this->root_;
-  if(!node || (key.empty()&&!node->is_value_node_)){
+  if (!node || (key.empty() && !node->is_value_node_)) {
     return nullptr;
   }
-  for(auto &c : key){
-    auto cur = node->children_.find(c);//暂时忽略node为空的情况
-    if(cur == node->children_.end()){
+  for (auto &c : key) {
+    auto cur = node->children_.find(c);  //暂时忽略node为空的情况
+    if (cur == node->children_.end()) {
       return nullptr;
     }
-    node = cur->second;//考虑使用std::const_pointer_cast
+    node = cur->second;  //考虑使用std::const_pointer_cast
   }
-  if(!node || !node->is_value_node_){
+  if (!node || !node->is_value_node_) {
     return nullptr;
   }
-  if(auto res = dynamic_cast<const TrieNodeWithValue<T> *>(node.get()); res){
+  if (auto res = dynamic_cast<const TrieNodeWithValue<T> *>(node.get()); res) {
     return res->value_.get();
-  }else{
-    return nullptr;
   }
+  return nullptr;
 }
 
 template <class T>
@@ -45,7 +44,7 @@ auto Trie::Put(std::string_view key, T value) const -> Trie {
 
   // You should walk through the trie and create new nodes if necessary. If the node corresponding to the key already
   // exists, you should create a new `TrieNodeWithValue`.
-  
+
   // 父节点可以有值.
   //暂时认为有key为空，value不为空的情况
   //忽略value为空的情况
@@ -55,25 +54,27 @@ auto Trie::Put(std::string_view key, T value) const -> Trie {
   auto node = new_root;
   std::shared_ptr<T> value_ptr = std::make_shared<T>(std::move(value));
   auto n = key.size();
-  if(key.empty()){
+  if (key.empty()) {
     //创建带值结点
     auto value_node = std::make_shared<TrieNodeWithValue<T>>(node->children_, value_ptr);
     new_root = std::move(value_node);
     return Trie{new_root};
-  }else{  
-    for(size_t i = 0; i < n - 1; i++){
-      if(auto temp = node->children_.find(key[i]); temp != node->children_.end()){
-        node->children_[key[i]] = std::shared_ptr<const TrieNode>(temp->second->Clone());//可能是带值结点，clone会调用派生类方法
-      }else{
-        node->children_[key[i]] = std::make_shared<const TrieNode>();
-      }
-      node = std::const_pointer_cast<TrieNode>(node->children_[key[i]]);//疑问，如果是带值结点呢,要用const_pointer_cast而不是dynamic
-      // node = node->children_[key[i]];//转换错误
-    }
   }
-  if(auto leaf = node->children_.find(key[n - 1]); leaf != node->children_.end()){
-    node->children_[key[n - 1]] = std::make_shared<TrieNodeWithValue<T>>(node->children_[key[n - 1]]->children_, std::move(value_ptr));
-  }else{
+  for (size_t i = 0; i < n - 1; i++) {
+    if (auto temp = node->children_.find(key[i]); temp != node->children_.end()) {
+      node->children_[key[i]] =
+          std::shared_ptr<const TrieNode>(temp->second->Clone());  //可能是带值结点，clone会调用派生类方法
+    } else {
+      node->children_[key[i]] = std::make_shared<const TrieNode>();
+    }
+    node = std::const_pointer_cast<TrieNode>(
+        node->children_[key[i]]);  //疑问，如果是带值结点呢,要用const_pointer_cast而不是dynamic
+    // node = node->children_[key[i]];//转换错误
+  }
+  if (auto leaf = node->children_.find(key[n - 1]); leaf != node->children_.end()) {
+    node->children_[key[n - 1]] =
+        std::make_shared<TrieNodeWithValue<T>>(node->children_[key[n - 1]]->children_, std::move(value_ptr));
+  } else {
     node->children_[key[n - 1]] = std::make_shared<TrieNodeWithValue<T>>(std::move(value_ptr));
   }
   return Trie{new_root};
@@ -87,41 +88,38 @@ auto Trie::Remove(std::string_view key) const -> Trie {
   //工作指针
   auto node = this->root_;
   std::stack<std::shared_ptr<const TrieNode>> st;
-  for(auto ch : key){
-    if(auto temp = node->children_.find(ch); temp != node->children_.end()){
+  for (auto ch : key) {
+    if (auto temp = node->children_.find(ch); temp != node->children_.end()) {
       // node->children_[key[ch]] = std::shared_ptr<const TrieNode>(temp->second->Clone());
       st.push(node);
       // node = std::dynamic_pointer_cast<TrieNode>(node->children_[key[ch]]);
       node = std::dynamic_pointer_cast<const TrieNode>(temp->second);
-    }
-    else{
+    } else {
       return Trie(root_);
     }
   }
-  if(!node->is_value_node_){
+  if (!node->is_value_node_) {
     return Trie(node);
-  }else{
-    // std::cout<<"改为非值结点"<<" ";
-    //删除逻辑，值结点改为非值结点
-    node = std::make_shared<const TrieNode>(node->children_);
   }
+  // std::cout<<"改为非值结点"<<" ";
+  //删除逻辑，值结点改为非值结点
+  node = std::make_shared<const TrieNode>(node->children_);
+
   //当前栈顶是父节点，node是子节点
-  for(auto idx = key.rbegin(); idx != key.rend(); idx++){
+  for (auto idx = key.rbegin(); idx != key.rend(); idx++) {
     auto fa = st.top()->Clone();
     st.pop();
-    if(node->children_.empty() && !node->is_value_node_){
+    if (node->children_.empty() && !node->is_value_node_) {
       //删除逻辑，无孩子，非值结点
       fa->children_.erase(*idx);
       // std::cout<<"删除一个"<<" ";
-    }
-    else{
+    } else {
       fa->children_[*idx] = node;
     }
     //转移所有权,node = std::move(fa);应该也可以
     node = std::shared_ptr<const TrieNode>(std::move(fa));
   }
   return node->children_.empty() ? Trie() : Trie(node);
-
 }
 
 // Below are explicit instantiation of template functions.
