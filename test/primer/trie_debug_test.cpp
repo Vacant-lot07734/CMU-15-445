@@ -37,7 +37,7 @@ TEST(TrieDebugger, TestCase) {
       default:
         break;
     }
-    trie = trie.Put<uint32_t>(key, value);
+    trie = trie.Put<uint32_t>(key, value);  // value实际的模板类型是unsigned int，调试时是这样的，巨坑
   }
 
   // Put a breakpoint here.
