@@ -175,13 +175,13 @@ class BufferPoolManager {
  private:
   /** Number of pages in the buffer pool. */
   const size_t pool_size_;
-  /** The next page id to be allocated  */
-  std::atomic<page_id_t> next_page_id_ = 0;
+  /** The next page id to be allocated  虚拟页号*/
+  std::atomic<page_id_t> next_page_id_ = 0;  // atomic保证线程安全
 
   /** Array of buffer pool pages. */
   Page *pages_;
   /** Pointer to the disk sheduler. */
-  std::unique_ptr<DiskScheduler> disk_scheduler_ __attribute__((__unused__));
+  std::unique_ptr<DiskScheduler> disk_scheduler_;
   /** Pointer to the log manager. Please ignore this for P1. */
   LogManager *log_manager_ __attribute__((__unused__));
   /** Page table for keeping track of buffer pool pages. */
@@ -203,10 +203,15 @@ class BufferPoolManager {
    * @brief Deallocate a page on disk. Caller should acquire the latch before calling this function.
    * @param page_id id of the page to deallocate
    */
-  void DeallocatePage(__attribute__((unused)) page_id_t page_id) {
+  void DeallocatePage(page_id_t page_id) {
     // This is a no-nop right now without a more complex data structure to track deallocated pages
   }
 
   // TODO(student): You may add additional private members and helper functions
+
+  void WriteTodisk(page_id_t page_id);
+
+  // resetmemory, pin, dirty
+  void PageReset(frame_id_t frame_id);
 };
 }  // namespace bustub

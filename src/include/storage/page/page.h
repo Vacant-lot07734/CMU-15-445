@@ -85,7 +85,7 @@ class Page {
   // Usually this should be stored as `char data_[BUSTUB_PAGE_SIZE]{};`. But to enable ASAN to detect page overflow,
   // we store it as a ptr.
   char *data_;
-  /** The ID of this page. */
+  /** The ID of this page. 逻辑页号*/
   page_id_t page_id_ = INVALID_PAGE_ID;
   /** The pin count of this page. */
   int pin_count_ = 0;
