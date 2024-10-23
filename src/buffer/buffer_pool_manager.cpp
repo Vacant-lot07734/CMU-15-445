@@ -70,7 +70,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
   return &pages_[replace_frame_id];
 }
 
-auto BufferPoolManager::FetchPage(page_id_t page_id, AccessType access_type) -> Page * {
+auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
   std::scoped_lock<std::mutex> latch(latch_);
   // First search for page_id in the buffer pool
   if (auto iter = page_table_.find(page_id); iter != page_table_.end()) {
@@ -90,8 +90,8 @@ auto BufferPoolManager::FetchPage(page_id_t page_id, AccessType access_type) -> 
     auto &cur = pages_[replace_frame_id];
     if (cur.IsDirty()) {
       WriteTodisk(cur.page_id_);
-      page_table_.erase(cur.page_id_);
     }
+    page_table_.erase(cur.page_id_);
   }
   PageReset(replace_frame_id);
   // read the page from disk by scheduling a read DiskRequest with
@@ -158,18 +158,15 @@ auto BufferPoolManager::DeletePage(page_id_t page_id) -> bool {
     // back to the free list. Also, reset the page's memory and metadata. Finally, you should call DeallocatePage() to
     // imitate freeing the page on the disk.
 
-    // if(pages_[iter->second].is_dirty_){
-    //   auto promise = disk_scheduler_->CreatePromise();
-    //   auto future = promise.get_future();
-    //   DiskRequest r{true, pages_[iter->second].GetData(), pages_[iter->second].page_id_, std::move(promise)};
-    //   disk_scheduler_->Schedule(std::move(r));
-    //   future.get();//阻塞,直至后台进程完成request
+    // if (pages_[iter->second].is_dirty_) {
+    //   WriteTodisk(iter->first);
     // }
     // replacer_->Remove(iter->second);
     free_list_.push_back(iter->second);
-    page_table_.erase(page_id);
     PageReset(iter->second);
     pages_[iter->second].page_id_ = INVALID_PAGE_ID;
+    //最后再erase，否则上面使用iter，会造成指针悬空
+    page_table_.erase(page_id);
     DeallocatePage(page_id);
   }
   return true;
