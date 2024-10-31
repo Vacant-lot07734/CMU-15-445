@@ -14,7 +14,7 @@ class BasicPageGuard {
 
   BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {}
 
-  BasicPageGuard(const BasicPageGuard &) = delete;
+  BasicPageGuard(const BasicPageGuard &) = delete;//显示删除拷贝构造函数
   auto operator=(const BasicPageGuard &) -> BasicPageGuard & = delete;
 
   /** TODO(P2): Add implementation
@@ -82,7 +82,6 @@ class BasicPageGuard {
    * @return an upgraded WritePageGuard
    */
   auto UpgradeWrite() -> WritePageGuard;
-
   auto PageId() -> page_id_t { return page_->GetPageId(); }
 
   auto GetData() -> const char * { return page_->GetData(); }
@@ -106,7 +105,7 @@ class BasicPageGuard {
   friend class ReadPageGuard;
   friend class WritePageGuard;
 
-  [[maybe_unused]] BufferPoolManager *bpm_{nullptr};
+  BufferPoolManager *bpm_{nullptr};
   Page *page_{nullptr};
   bool is_dirty_{false};
 };
