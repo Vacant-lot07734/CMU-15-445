@@ -15,6 +15,7 @@
  *  ---------------------------------------------------
  * | DirectoryPageIds(2048) | MaxDepth (4) | Free(2044)
  *  ---------------------------------------------------
+ * 4096 4KB
  */
 
 #pragma once
@@ -24,7 +25,7 @@
 #include "common/macros.h"
 
 namespace bustub {
-
+//定义一个编译时常量。这样的常量在编译时就已经确定，并且可以在编译时进行优化
 static constexpr uint64_t HTABLE_HEADER_PAGE_METADATA_SIZE = sizeof(uint32_t);
 static constexpr uint64_t HTABLE_HEADER_MAX_DEPTH = 9;
 static constexpr uint64_t HTABLE_HEADER_ARRAY_SIZE = 1 << HTABLE_HEADER_MAX_DEPTH;
