@@ -6,9 +6,9 @@ namespace bustub {
 
 BasicPageGuard::BasicPageGuard(BasicPageGuard &&that) noexcept {
     //noexcept告知编译器该函数不会抛出异常，移动构造函数和移动赋值运算符默认是 noexcept 的
-    this->bpm_ = std::move(that.bpm_);
-    this->page_ = std::move(that.page_);
-    this->is_dirty_ = std::move(that.is_dirty_);
+    this->bpm_ = that.bpm_;
+    this->page_ = that.page_;
+    this->is_dirty_ = that.is_dirty_;
     that.bpm_ = nullptr;
     that.page_ = nullptr;
     that.is_dirty_ = false;
@@ -28,8 +28,8 @@ auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard
     // the purpose of a page guard.
     this->Drop();//不再管理自己的页
     this->bpm_ = that.bpm_;
-    this->page_ = std::move(that.page_);
-    this->is_dirty_ = std::move(that.is_dirty_);
+    this->page_ = that.page_;
+    this->is_dirty_ = that.is_dirty_;
     that.bpm_ = nullptr;
     that.page_ = nullptr;
     that.is_dirty_ = false;

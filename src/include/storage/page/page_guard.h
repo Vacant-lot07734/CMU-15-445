@@ -88,6 +88,7 @@ class BasicPageGuard {
 
   template <class T>
   auto As() -> const T * {
+    // reinterpter_cast类型转换，不检查安全性，不改变底层二进制
     return reinterpret_cast<const T *>(GetData());
   }
 
