@@ -35,7 +35,11 @@ auto ExtendibleHTableDirectoryPage::HashToBucketIndex(uint32_t hash) const -> ui
     return 0;
   }
   //此处哈希取低位
-  return (hash & (1 << this->global_depth_)-1);
+  // return (hash & (1 << this->global_depth_)-1);
+  //先交gd，再交ld，因为ld可能小于gd
+  uint32_t local_hash = (hash & (1 << this->global_depth_)-1);
+  // local_hash = local_hash & (this->GetLdMask(local_hash));
+  return local_hash;
 }
 
 auto ExtendibleHTableDirectoryPage::GetBucketPageId(uint32_t bucket_idx) const -> page_id_t {
@@ -54,7 +58,7 @@ void ExtendibleHTableDirectoryPage::SetBucketPageId(uint32_t bucket_idx, page_id
 }
 
 auto ExtendibleHTableDirectoryPage::GetSplitImageIndex(uint32_t bucket_idx) const -> uint32_t {
-  // *****
+  // 分裂后的两个，从一个可以获取另一个
   return bucket_idx + (1 << (this->global_depth_ - 1));
 }
 
@@ -93,6 +97,7 @@ auto ExtendibleHTableDirectoryPage::CanShrink() -> bool {
     return false;
   }
   for(uint32_t i = 0; i < Size(); ++i) {
+    //only when gd > ld , CanShrink
     if (local_depths_[i] == global_depth_) {
       return false;
     }
@@ -124,8 +129,7 @@ void ExtendibleHTableDirectoryPage::IncrLocalDepth(uint32_t bucket_idx) {
   if(bucket_idx >= MaxSize()){
     throw("ExtendibleHTableDirectoryPage::IncrLocalDepth---bucket_idx is greater than global_depth");
   }
-  
-  bucket_idx++;
+  local_depths_[bucket_idx]++;
 }
 
 void ExtendibleHTableDirectoryPage::DecrLocalDepth(uint32_t bucket_idx) {
@@ -133,12 +137,30 @@ void ExtendibleHTableDirectoryPage::DecrLocalDepth(uint32_t bucket_idx) {
   if(bucket_idx >= MaxSize()){
     throw Exception("ExtendibleHTableDirectoryPage::DecrLocalDepth---bucket_idx is greater than global_depth");
   }
-
-  bucket_idx--;
+  if(local_depths_[bucket_idx] > 0){
+    local_depths_[bucket_idx]--; 
+  }
 }
 
 auto ExtendibleHTableDirectoryPage::MaxSize() const -> uint32_t {
   return 1 << (this->max_depth_);
+}
+
+auto ExtendibleHTableDirectoryPage::GetLdMask(uint32_t global_hash) const -> uint32_t {
+  // uint32_t left = 1, right = this->Size();
+  // while(left < right){
+  //   int temp = global_hash & 1;
+  //   if(temp){
+  //     left = (left + right) / 2 + 1;
+  //   }
+  //   else{
+  //     right = (left + right) / 2;
+  //   }
+  //   global_hash = global_hash >> 1;
+  // }
+  // return (1 << this->local_depths_[left-1]) - 1;
+
+  return (1 << this->local_depths_[global_hash]) - 1;
 }
 
 }  // namespace bustub
