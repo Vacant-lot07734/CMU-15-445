@@ -27,6 +27,9 @@ void ExtendibleHTableHeaderPage::Init(uint32_t max_depth) {
 auto ExtendibleHTableHeaderPage::HashToDirectoryIndex(uint32_t hash) const -> uint32_t {
   //uint32_t 应该是跨平台固定32位
   //此处哈希取高位
+  if(max_depth_ == 0){
+    return 0;
+  }
   return hash >> (32 - this->max_depth_);
 }
 

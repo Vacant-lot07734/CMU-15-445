@@ -13,10 +13,12 @@
 #include "storage/page/extendible_htable_directory_page.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <unordered_map>
 
 #include "common/config.h"
 #include "common/logger.h"
+#include "common/macros.h"
 
 namespace bustub {
 
@@ -42,6 +44,10 @@ auto ExtendibleHTableDirectoryPage::HashToBucketIndex(uint32_t hash) const -> ui
   return local_hash;
 }
 
+auto ExtendibleHTableDirectoryPage::GetMaxDepth() const -> uint32_t {
+  return max_depth_;
+}
+
 auto ExtendibleHTableDirectoryPage::GetBucketPageId(uint32_t bucket_idx) const -> page_id_t {
   if(bucket_idx >= MaxSize()){
     throw Exception("ExtendibleHTableDirectoryPage::GetBucketPageId---bucket_idx is greater than max_depth_");
@@ -59,7 +65,9 @@ void ExtendibleHTableDirectoryPage::SetBucketPageId(uint32_t bucket_idx, page_id
 
 auto ExtendibleHTableDirectoryPage::GetSplitImageIndex(uint32_t bucket_idx) const -> uint32_t {
   // 分裂后的两个，从一个可以获取另一个
-  return bucket_idx + (1 << (this->global_depth_ - 1));
+  uint32_t tmp = bucket_idx + (1 << (this->global_depth_ - 1));
+  auto mask = this->GetGlobalDepthMask();
+  return tmp & mask;
 }
 
 auto ExtendibleHTableDirectoryPage::GetGlobalDepth() const -> uint32_t {
@@ -146,21 +154,11 @@ auto ExtendibleHTableDirectoryPage::MaxSize() const -> uint32_t {
   return 1 << (this->max_depth_);
 }
 
-auto ExtendibleHTableDirectoryPage::GetLdMask(uint32_t global_hash) const -> uint32_t {
-  // uint32_t left = 1, right = this->Size();
-  // while(left < right){
-  //   int temp = global_hash & 1;
-  //   if(temp){
-  //     left = (left + right) / 2 + 1;
-  //   }
-  //   else{
-  //     right = (left + right) / 2;
-  //   }
-  //   global_hash = global_hash >> 1;
-  // }
-  // return (1 << this->local_depths_[left-1]) - 1;
-
-  return (1 << this->local_depths_[global_hash]) - 1;
+auto ExtendibleHTableDirectoryPage::GetLocalDepthMask(uint32_t bucket_idx) const -> uint32_t{
+  return (1 << this->local_depths_[bucket_idx]) - 1;
+}
+auto ExtendibleHTableDirectoryPage::GetGlobalDepthMask() const -> uint32_t {
+  return (1 << this->global_depth_) - 1;
 }
 
 }  // namespace bustub

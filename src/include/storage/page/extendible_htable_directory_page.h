@@ -174,10 +174,6 @@ class ExtendibleHTableDirectoryPage {
    */
   void DecrLocalDepth(uint32_t bucket_idx);
 
-  /**
-   * get local_depth mask
-   */
-  auto GetLdMask(uint32_t global_hash) const -> uint32_t;
 
   /**
    * VerifyIntegrity

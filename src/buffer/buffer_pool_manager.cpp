@@ -43,6 +43,7 @@ BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager
 BufferPoolManager::~BufferPoolManager() { delete[] pages_; }
 
 auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
+  // 重在从buffer pool分配新页面
   std::scoped_lock<std::mutex> latch(latch_);
   frame_id_t replace_frame_id;
   if (!free_list_.empty()) {
@@ -71,6 +72,7 @@ auto BufferPoolManager::NewPage(page_id_t *page_id) -> Page * {
 }
 
 auto BufferPoolManager::FetchPage(page_id_t page_id, [[maybe_unused]] AccessType access_type) -> Page * {
+  // 从buffer pool获取特定页面，不在缓冲池的话，就从磁盘取出来
   std::scoped_lock<std::mutex> latch(latch_);
   // First search for page_id in the buffer pool
   if (auto iter = page_table_.find(page_id); iter != page_table_.end()) {
@@ -190,22 +192,25 @@ void BufferPoolManager::PageReset(frame_id_t frame_id) {
 auto BufferPoolManager::AllocatePage() -> page_id_t { return next_page_id_++; }
 
 auto BufferPoolManager::FetchPageBasic(page_id_t page_id) -> BasicPageGuard {
+  // pin_count++ 升级时才会上锁
   return {this, this->FetchPage(page_id)};
 }
 
 auto BufferPoolManager::FetchPageRead(page_id_t page_id) -> ReadPageGuard {
-  auto new_page_ = this->FetchPage(page_id);
-  new_page_->RLatch();
-  return {this, new_page_};
+  // pin_count++ 并上锁
+  auto new_page = this->FetchPage(page_id);
+  new_page->RLatch();
+  return {this, new_page};
 }
 
 auto BufferPoolManager::FetchPageWrite(page_id_t page_id) -> WritePageGuard {
-  auto new_page_ = this->FetchPage(page_id);
-  new_page_->WLatch();
-  return {this,new_page_};
+  auto new_page = this->FetchPage(page_id);
+  new_page->WLatch();
+  return {this,new_page};
 }
 
 auto BufferPoolManager::NewPageGuarded(page_id_t *page_id) -> BasicPageGuard {
+  // NewPage 在buffer pool 分配一个新页面
   return {this, this->NewPage(page_id)};
 }
 

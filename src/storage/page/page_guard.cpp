@@ -15,9 +15,12 @@ BasicPageGuard::BasicPageGuard(BasicPageGuard &&that) noexcept {
 }
 
 void BasicPageGuard::Drop() {
-   bpm_->UnpinPage(page_->GetPageId(), is_dirty_);
-   is_dirty_ = false;
-   
+    if(bpm_ != nullptr){
+        bpm_->UnpinPage(this->PageId(), is_dirty_);
+        bpm_ = nullptr;
+        page_ = nullptr;
+        is_dirty_ = false;
+    }
 }
 
 auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard & {
@@ -52,7 +55,7 @@ auto BasicPageGuard::UpgradeRead() -> ReadPageGuard {
 auto BasicPageGuard::UpgradeWrite() -> WritePageGuard {
     this->page_->WLatch();//获取写锁
     WritePageGuard write_guard(this->bpm_, this->page_);
-    this->page_->WUnlatch();
+    // this->page_->WUnlatch();
     this->bpm_ = nullptr;
     this->page_ = nullptr;
     this->is_dirty_ = false;
@@ -70,8 +73,13 @@ auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & 
 }
 
 void ReadPageGuard::Drop() {
-    this->guard_.Drop();
-    this->guard_.page_->RUnlatch();
+    // 判断一下防止drop两次
+    if(this->guard_.page_ != nullptr){
+        this->guard_.bpm_->UnpinPage(this->guard_.PageId(), this->guard_.is_dirty_);
+        this->guard_.page_->RUnlatch();
+        this->guard_.bpm_ = nullptr;
+        this->guard_.page_ = nullptr;
+    }
 }
 
 ReadPageGuard::~ReadPageGuard() {
@@ -89,8 +97,13 @@ auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard
 }
 
 void WritePageGuard::Drop() {
-    this->guard_.Drop();
-    this->guard_.page_->WUnlatch();
+    if(this->guard_.bpm_ != nullptr){
+        this->guard_.bpm_->UnpinPage(this->guard_.PageId(), this->guard_.is_dirty_);
+        this->guard_.page_->WUnlatch();
+        this->guard_.bpm_ = nullptr;
+        this->guard_.page_ = nullptr;
+    }
+    
 }
 
 WritePageGuard::~WritePageGuard() {
