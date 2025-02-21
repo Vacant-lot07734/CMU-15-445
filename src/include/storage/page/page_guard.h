@@ -14,7 +14,7 @@ class BasicPageGuard {
 
   BasicPageGuard(BufferPoolManager *bpm, Page *page) : bpm_(bpm), page_(page) {}
 
-  BasicPageGuard(const BasicPageGuard &) = delete;//显示删除拷贝构造函数
+  BasicPageGuard(const BasicPageGuard &) = delete;  //显示删除拷贝构造函数
   auto operator=(const BasicPageGuard &) -> BasicPageGuard & = delete;
 
   /** TODO(P2): Add implementation
