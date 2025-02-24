@@ -117,7 +117,8 @@ auto DiskExtendibleHashTable<K, V, KC>::Insert(const K &key, const V &value, Tra
   if (static_cast<int>(bucket_page_id) == INVALID_PAGE_ID) {
     return InsertToNewBucket(directory_page, bucket_index, key, value);
   }
-  directory_guard.Drop();
+  // fix bug 不能提前释放directory_page的锁
+  // directory_guard.Drop();
 
   // bucket -> key-value
   auto bucket_guard = bpm_->FetchPageWrite(bucket_page_id);
@@ -136,6 +137,9 @@ auto DiskExtendibleHashTable<K, V, KC>::Insert(const K &key, const V &value, Tra
     }
     // 增加gd，函数内完成 目录、ld的拷贝，之后才能增加ld
     directory_page->IncrGlobalDepth();
+    if (directory_page->GetLocalDepth(bucket_index) == directory_page->GetGlobalDepth()) {
+      return false;
+    }
   }
   // 需要更新 directory 和新分裂 bucket 的映射 DirectoryMapping
   page_id_t new_bucket_page_id;

@@ -37,10 +37,7 @@ auto ExtendibleHTableDirectoryPage::HashToBucketIndex(uint32_t hash) const -> ui
     return 0;
   }
   //此处哈希取低位
-  // return (hash & (1 << this->global_depth_)-1);
-  //先交gd，再交ld，因为ld可能小于gd
-  uint32_t local_hash = (hash & (1 << this->global_depth_) - 1);
-  // local_hash = local_hash & (this->GetLdMask(local_hash));
+  uint32_t local_hash = hash & GetGlobalDepthMask();
   return local_hash;
 }
 
