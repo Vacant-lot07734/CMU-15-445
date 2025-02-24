@@ -15,12 +15,12 @@ BasicPageGuard::BasicPageGuard(BasicPageGuard &&that) noexcept {
 }
 
 void BasicPageGuard::Drop() {
-  if (bpm_ != nullptr) {
+  if (bpm_ != nullptr && page_ != nullptr) {
     bpm_->UnpinPage(this->PageId(), is_dirty_);
-    bpm_ = nullptr;
-    page_ = nullptr;
-    is_dirty_ = false;
   }
+  bpm_ = nullptr;
+  page_ = nullptr;
+  is_dirty_ = false;
 }
 
 auto BasicPageGuard::operator=(BasicPageGuard &&that) noexcept -> BasicPageGuard & {
@@ -65,19 +65,19 @@ auto BasicPageGuard::UpgradeWrite() -> WritePageGuard {
 ReadPageGuard::ReadPageGuard(ReadPageGuard &&that) noexcept { this->guard_ = std::move(that.guard_); };
 
 auto ReadPageGuard::operator=(ReadPageGuard &&that) noexcept -> ReadPageGuard & {
-  this->guard_.Drop();  //不再管理自己的页
+  this->Drop();  //不再管理自己的页
   this->guard_ = std::move(that.guard_);
   return *this;
 }
 
 void ReadPageGuard::Drop() {
   // 判断一下防止drop两次
-  if (this->guard_.page_ != nullptr) {
+  if (this->guard_.page_ != nullptr && this->guard_.page_ != nullptr) {
     this->guard_.bpm_->UnpinPage(this->guard_.PageId(), this->guard_.is_dirty_);
     this->guard_.page_->RUnlatch();
-    this->guard_.bpm_ = nullptr;
-    this->guard_.page_ = nullptr;
   }
+  this->guard_.bpm_ = nullptr;
+  this->guard_.page_ = nullptr;
 }
 
 ReadPageGuard::~ReadPageGuard() { this->Drop(); }  // NOLINT
@@ -85,18 +85,19 @@ ReadPageGuard::~ReadPageGuard() { this->Drop(); }  // NOLINT
 WritePageGuard::WritePageGuard(WritePageGuard &&that) noexcept { this->guard_ = std::move(that.guard_); }
 
 auto WritePageGuard::operator=(WritePageGuard &&that) noexcept -> WritePageGuard & {
-  this->guard_.Drop();  //不再管理自己的页
+  this->Drop();  //不再管理自己的页
   this->guard_ = std::move(that.guard_);
   return *this;
 }
 
 void WritePageGuard::Drop() {
-  if (this->guard_.bpm_ != nullptr) {
+  if (this->guard_.bpm_ != nullptr && this->guard_.page_ != nullptr) {
     this->guard_.bpm_->UnpinPage(this->guard_.PageId(), this->guard_.is_dirty_);
     this->guard_.page_->WUnlatch();
-    this->guard_.bpm_ = nullptr;
-    this->guard_.page_ = nullptr;
   }
+  this->guard_.bpm_ = nullptr;
+  this->guard_.page_ = nullptr;
+  this->guard_.is_dirty_ = true;
 }
 
 WritePageGuard::~WritePageGuard() { this->Drop(); }  // NOLINT

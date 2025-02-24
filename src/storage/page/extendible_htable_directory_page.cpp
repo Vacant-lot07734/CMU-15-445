@@ -73,7 +73,7 @@ auto ExtendibleHTableDirectoryPage::GetGlobalDepth() const -> uint32_t { return 
 void ExtendibleHTableDirectoryPage::IncrGlobalDepth() {
   // throw NotImplementedException("ExtendibleHTableDirectoryPage is not implemented");
   //已经增长到最大
-  if (this->global_depth_ == this->max_depth_) {
+  if (this->global_depth_ >= this->max_depth_) {
     return;
   }
   uint32_t t = 1 << this->global_depth_;

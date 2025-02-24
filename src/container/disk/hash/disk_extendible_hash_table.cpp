@@ -146,6 +146,7 @@ auto DiskExtendibleHashTable<K, V, KC>::Insert(const K &key, const V &value, Tra
   auto new_bucket_page = new_bucket_guard.AsMut<ExtendibleHTableBucketPage<K, V, KC>>();
   new_bucket_page->Init(bucket_max_size_);
   directory_page->IncrLocalDepth(bucket_index);
+  // LOG_DEBUG("bucket_idx:%d new_bucket_idx:%d gd:%d", bucket_index, new_bucket_idx, directory_page->GetGlobalDepth());
   UpdateDirectoryMapping(directory_page, new_bucket_idx, new_bucket_page_id,
                          directory_page->GetLocalDepth(bucket_index), directory_page->GetLocalDepthMask(bucket_index));
   // 拆分 bucket 将原来一个 bucket 的 entries 分配到两个
@@ -221,22 +222,9 @@ void DiskExtendibleHashTable<K, V, KC>::UpdateDirectoryMapping(ExtendibleHTableD
                                                                uint32_t new_bucket_idx, page_id_t new_bucket_page_id,
                                                                uint32_t new_local_depth, uint32_t local_depth_mask) {
   // throw NotImplementedException("DiskExtendibleHashTable is not implemented");
-  directory->SetBucketPageId(new_bucket_idx, new_bucket_page_id);
   directory->SetLocalDepth(new_bucket_idx, new_local_depth);
-  // for (uint32_t i = 0; i < (1U << directory->GetGlobalDepth()); ++i) {
-  //   // 检查目录条目是否需要更新为指向新桶
-  //   // 如果目录项对应的是原桶
-  //   if (directory->GetBucketPageId(i) == directory->GetBucketPageId(new_bucket_idx)) {
-  //     if ((i & local_depth_mask) == 1) {
-  //       // 如果这个目录项的在新局部深度位上的值为1，应该指向新桶
-  //       directory->SetBucketPageId(i, new_bucket_page_id);
-  //       directory->SetLocalDepth(i, new_local_depth);
-  //     } else {
-  //       // 否则，它仍然指向原桶，但其局部深度需要更新
-  //       directory->SetLocalDepth(i, new_local_depth);
-  //     }
-  //   }
-  // }
+  directory->SetBucketPageId(new_bucket_idx, new_bucket_page_id);
+  // directory->SetLocalDepth(new_bucket_idx, new_local_depth);
 }
 
 /*****************************************************************************
