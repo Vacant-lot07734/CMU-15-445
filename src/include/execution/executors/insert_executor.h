@@ -57,6 +57,10 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+  // get child exector of tuple
+  std::unique_ptr<AbstractExecutor> child_executor_;
+  // show whether Next() is called
+  bool is_inserted_;
 };
 
 }  // namespace bustub

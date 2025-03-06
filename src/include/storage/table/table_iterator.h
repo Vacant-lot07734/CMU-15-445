@@ -44,7 +44,7 @@ class TableIterator {
   auto GetRID() -> RID;
 
   auto IsEnd() -> bool;
-
+  // 重载前置++运算符，返回当前对象引用。如果重载后置++运算符，括号里要写占位符如int，要返回原对象的副本
   auto operator++() -> TableIterator &;
 
  private:
